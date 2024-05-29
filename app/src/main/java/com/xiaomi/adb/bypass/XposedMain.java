@@ -1,8 +1,10 @@
 package com.xiaomi.adb.bypass;
 
+import android.app.Fragment;
 import android.content.Context;
 
 import androidx.annotation.Keep;
+
 
 import java.lang.reflect.Method;
 import java.util.Objects;
@@ -11,8 +13,10 @@ import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
+/** @noinspection UnreachableCode*/
 @Keep
 public class XposedMain implements IXposedHookLoadPackage {
     @Override
@@ -72,6 +76,40 @@ public class XposedMain implements IXposedHookLoadPackage {
             {
                 Method method = clazz.getDeclaredMethod("isInputEnabled");
                 XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(true));
+            }
+        }
+        {
+            Class<?> clazz = classLoader.loadClass("com.android.settings.development.EnableAdbWarningDialog");
+            {
+                Method method = clazz.getMethod("show", Fragment.class);
+                XposedBridge.hookMethod(method, new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        XposedBridge.log("EnableAdbWarningDialog.show()");
+                    }
+                });
+            }
+        }
+        {
+            Class<?> clazz = classLoader.loadClass("com.android.settingslib.development.AbstractEnableAdbPreferenceController");
+            Class<?> mPreference = classLoader.loadClass("androidx.preference.Preference");
+            {
+                Method method = clazz.getDeclaredMethod("updateEnableAdbPreference", mPreference,boolean.class);
+                XposedBridge.hookMethod(method, new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        XposedBridge.log("AbstractEnableAdbPreferenceController.updateEnableAdbPreference() " + param.args[1]);
+                    }
+                });
+            }
+            {
+                Method method = clazz.getDeclaredMethod("onPreferenceChange", mPreference,Object.class);
+                XposedBridge.hookMethod(method, new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        XposedBridge.log("AbstractEnableAdbPreferenceController.onPreferenceChange() " + param.args[1]);
+                    }
+                });
             }
         }
     }

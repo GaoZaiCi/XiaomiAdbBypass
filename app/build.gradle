@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
 }
 
 android {
@@ -31,9 +30,6 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
     buildFeatures {
         compose true
     }
@@ -49,8 +45,7 @@ android {
 
 dependencies {
     compileOnly 'de.robv.android.xposed:api:82'
-    implementation libs.androidx.core.ktx
-    implementation libs.androidx.lifecycle.runtime.ktx
+    compileOnly files('classes.jar')
     implementation libs.androidx.activity.compose
     implementation platform(libs.androidx.compose.bom)
     implementation libs.androidx.ui
