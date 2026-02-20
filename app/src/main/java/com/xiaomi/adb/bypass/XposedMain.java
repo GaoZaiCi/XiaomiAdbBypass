@@ -1,9 +1,9 @@
 package com.xiaomi.adb.bypass;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -62,6 +62,7 @@ public class XposedMain implements IXposedHookLoadPackage {
             if (Objects.equals(lp.packageName, "com.miui.securitycenter")) {
                 startHookBySecurityCenter(lp.classLoader);
             }
+            // Not recommended to force enable
             if (Objects.equals(lp.packageName, "com.android.settings")) {
                 startHookBySettings(lp.classLoader);
             }
@@ -71,40 +72,6 @@ public class XposedMain implements IXposedHookLoadPackage {
     }
 
     private void startHookBySecurityCenter(ClassLoader classLoader) {
-        try {
-            Class<?> clazz = classLoader.loadClass("com.miui.common.persistence.RemoteProvider");
-            Method method = clazz.getDeclaredMethod("a", String.class, boolean.class);
-            XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(null));
-        } catch (Throwable e) {
-            XposedBridge.log(e);
-        }
-        try {
-            Class<?> clazz = classLoader.loadClass("com.miui.permcenter.install.c");
-            {
-                Method method = clazz.getDeclaredMethod("a", boolean.class);
-                XposedBridge.hookMethod(method, new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        param.args[0] = true;
-                    }
-                });
-            }
-            {
-                Method method = clazz.getDeclaredMethod("b", boolean.class);
-                XposedBridge.hookMethod(method, new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        param.args[0] = false;
-                    }
-                });
-            }
-            {
-                Method method = clazz.getDeclaredMethod("e");
-                XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(false));
-            }
-        } catch (Throwable e) {
-            XposedBridge.log(e);
-        }
         // hyper
         try {
             Class<?> clazz = classLoader.loadClass("com.miui.permcenter.privacymanager.InterceptPermissionFragment");
@@ -163,40 +130,33 @@ public class XposedMain implements IXposedHookLoadPackage {
             {
                 Method method = clazz.getDeclaredMethod("onCreate", Bundle.class);
                 XposedBridge.hookMethod(method, new XC_MethodHook() {
+
                     @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        Activity activity = (Activity) param.thisObject;
+                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        var activity = (Activity) param.thisObject;
                         var intent = activity.getIntent();
-                        boolean isInput = intent.getBooleanExtra("is_input", false);
-                        if (isInput) {
-                            {
-                                Class<?> superClass = activity.getClass().getSuperclass();
-                                Method onCreate = null;
-                                while (true) {
-                                    if (superClass == null) {
-                                        break;
-                                    }
-                                    onCreate = superClass.getDeclaredMethod("onCreate", Bundle.class);
-                                    if (onCreate != method) {
-                                        break;
-                                    }
-                                    superClass = superClass.getSuperclass();
-                                }
-                                if (onCreate != null) {
-                                    onCreate.setAccessible(true);
-                                    onCreate.invoke(activity, (Bundle) param.args[0]);
-                                }
+                        if (intent != null) {
+                            var isInput = intent.getBooleanExtra("is_input", false);
+                            if (!isInput){
+                                XposedBridge.log("Disable Xiaomi Account verification for USB installation");
                             }
-                            {
-                                var method = activity.getClass().getDeclaredMethod("K0");
-                                method.setAccessible(true);
-                                method.invoke(activity);
-                            }
-                            activity.finish();
-                            param.setResult(null);
                         }
+                        {
+                            var method = activity.getClass().getDeclaredMethod("K0");
+                            method.setAccessible(true);
+                            method.invoke(activity);
+                        }
+                        activity.finish();
                     }
                 });
+            }
+            {
+                Method method = clazz.getDeclaredMethod("J0", Bundle.class);
+                XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(null));
+            }
+            {
+                Method method = clazz.getDeclaredMethod("N0", Bundle.class);
+                XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(null));
             }
         } catch (Throwable e) {
             XposedBridge.log(e);
@@ -213,44 +173,6 @@ public class XposedMain implements IXposedHookLoadPackage {
             {
                 Method method = clazz.getDeclaredMethod("isInputEnabled");
                 XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(true));
-            }
-        } catch (Throwable e) {
-            XposedBridge.log(e);
-        }
-        try {
-            Class<?> clazz = classLoader.loadClass("com.android.settings.development.EnableAdbWarningDialog");
-            {
-                Method method = clazz.getMethod("show", Fragment.class);
-                XposedBridge.hookMethod(method, new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        XposedBridge.log("EnableAdbWarningDialog.show()");
-                    }
-                });
-            }
-        } catch (Throwable e) {
-            XposedBridge.log(e);
-        }
-        try {
-            Class<?> clazz = classLoader.loadClass("com.android.settingslib.development.AbstractEnableAdbPreferenceController");
-            Class<?> mPreference = classLoader.loadClass("androidx.preference.Preference");
-            {
-                Method method = clazz.getDeclaredMethod("updateEnableAdbPreference", mPreference, boolean.class);
-                XposedBridge.hookMethod(method, new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        XposedBridge.log("AbstractEnableAdbPreferenceController.updateEnableAdbPreference() " + param.args[1]);
-                    }
-                });
-            }
-            {
-                Method method = clazz.getDeclaredMethod("onPreferenceChange", mPreference, Object.class);
-                XposedBridge.hookMethod(method, new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        XposedBridge.log("AbstractEnableAdbPreferenceController.onPreferenceChange() " + param.args[1]);
-                    }
-                });
             }
         } catch (Throwable e) {
             XposedBridge.log(e);
