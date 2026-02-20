@@ -174,7 +174,7 @@ public class XposedMain implements IXposedHookLoadPackage {
                 XposedBridge.log(e);
             }
             try {
-                Method method = clazz.getDeclaredMethod("N0", Bundle.class);
+                Method method = clazz.getDeclaredMethod("N0");
                 XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(null));
             } catch (Throwable e) {
                 XposedBridge.log(e);
@@ -187,7 +187,7 @@ public class XposedMain implements IXposedHookLoadPackage {
                 XposedBridge.log(e);
             }
             try {
-                Method method = clazz.getDeclaredMethod("m0", Bundle.class);
+                Method method = clazz.getDeclaredMethod("m0");
                 XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(null));
             } catch (Throwable e) {
                 XposedBridge.log(e);
