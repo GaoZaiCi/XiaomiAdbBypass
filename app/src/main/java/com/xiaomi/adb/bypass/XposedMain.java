@@ -137,26 +137,60 @@ public class XposedMain implements IXposedHookLoadPackage {
                         var intent = activity.getIntent();
                         if (intent != null) {
                             var isInput = intent.getBooleanExtra("is_input", false);
-                            if (!isInput){
+                            if (!isInput) {
                                 XposedBridge.log("Disable Xiaomi Account verification for USB installation");
                             }
                         }
-                        {
+                        boolean success = false;
+                        try {
                             var method = activity.getClass().getDeclaredMethod("K0");
                             method.setAccessible(true);
                             method.invoke(activity);
+                            success = true;
+                        } catch (Throwable e) {
+                            XposedBridge.log(e);
                         }
-                        activity.finish();
+                        try {
+                            // Global
+                            var method = activity.getClass().getDeclaredMethod("j0");
+                            method.setAccessible(true);
+                            method.invoke(activity);
+                            success = true;
+                        } catch (Throwable e) {
+                            XposedBridge.log(e);
+                        }
+                        if (success) {
+                            activity.finish();
+                        } else {
+                            Toast.makeText(activity, "Disable Xiaomi Account verification failed", Toast.LENGTH_LONG).show();
+                        }
                     }
                 });
             }
-            {
+            try {
                 Method method = clazz.getDeclaredMethod("J0", Bundle.class);
                 XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(null));
+            } catch (Throwable e) {
+                XposedBridge.log(e);
             }
-            {
+            try {
                 Method method = clazz.getDeclaredMethod("N0", Bundle.class);
                 XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(null));
+            } catch (Throwable e) {
+                XposedBridge.log(e);
+            }
+            // Global
+            try {
+                Method method = clazz.getDeclaredMethod("iO", Bundle.class);
+                XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(null));
+            } catch (Throwable e) {
+                XposedBridge.log(e);
+            }
+            try {
+                Method method = clazz.getDeclaredMethod("m0", Bundle.class);
+                XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(null));
+            } catch (Throwable e) {
+                XposedBridge.log(e);
             }
         } catch (Throwable e) {
             XposedBridge.log(e);
